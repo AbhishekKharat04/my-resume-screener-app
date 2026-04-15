@@ -865,8 +865,21 @@ def main():
                                 "grade": grade,
                             }
                         )
-                        st.markdown(f'<div class="recommendation-box">{optimized_resume}</div>', unsafe_allow_html=True)
-                        st.download_button("Download Optimized Resume", optimized_resume, "optimized_resume.txt")
+                        st.markdown(optimized_resume)
+                        
+                        from utils.export_document import generate_markdown_pdf
+                        try:
+                            pdf_out = generate_markdown_pdf(optimized_resume)
+                            st.download_button(
+                                label="📥 Download Optimized Resume (PDF)", 
+                                data=pdf_out, 
+                                file_name="Optimized_Resume.pdf",
+                                mime="application/pdf",
+                                type="primary"
+                            )
+                        except Exception as e:
+                            st.error("Could not convert to PDF. Fallback to Text.")
+                            st.download_button("Download Optimized Resume (TXT)", optimized_resume, "optimized_resume.txt")
 
             # Cover Letter Generator
             with st.expander("💌 Generate Tailored Cover Letter"):
@@ -883,8 +896,21 @@ def main():
                                 "job_description": ats_jd_final,
                             }
                         )
-                        st.markdown(f'<div class="recommendation-box">{cover_letter}</div>', unsafe_allow_html=True)
-                        st.download_button("Download Cover Letter", cover_letter, "cover_letter.txt")
+                        st.markdown(cover_letter)
+                        
+                        from utils.export_document import generate_markdown_pdf
+                        try:
+                            pdf_out = generate_markdown_pdf(cover_letter)
+                            st.download_button(
+                                label="📥 Download Cover Letter (PDF)", 
+                                data=pdf_out, 
+                                file_name="Cover_Letter.pdf",
+                                mime="application/pdf",
+                                type="primary"
+                            )
+                        except Exception as e:
+                            st.error("Could not convert to PDF. Fallback to Text.")
+                            st.download_button("Download Cover Letter (TXT)", cover_letter, "cover_letter.txt")
 
             # Interview Question Predictor
             with st.expander("❓ Predict Interview Questions"):
@@ -901,7 +927,7 @@ def main():
                                 "grade": grade,
                             }
                         )
-                        st.markdown(f'<div class="recommendation-box">{interview_qs}</div>', unsafe_allow_html=True)
+                        st.markdown(interview_qs)
 
             # PDF Report Download
             st.markdown("---")
