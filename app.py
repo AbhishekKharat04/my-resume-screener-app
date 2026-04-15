@@ -28,6 +28,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ── Streamlit Cloud Secrets → Environment Variables ──────────────────────────
+# On Streamlit Cloud there's no .env file. Instead, secrets are set via the
+# dashboard and are available in st.secrets. We inject them into os.environ so
+# that LangChain, Groq, and LangSmith pick them up automatically.
+_CLOUD_KEYS = [
+    "GROQ_API_KEY",
+    "LANGCHAIN_TRACING_V2",
+    "LANGCHAIN_API_KEY",
+    "LANGCHAIN_PROJECT",
+    "LANGCHAIN_ENDPOINT",
+]
+for _k in _CLOUD_KEYS:
+    if _k not in os.environ and _k in st.secrets:
+        os.environ[_k] = st.secrets[_k]
+
 # ── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="AI Resume Screener",
