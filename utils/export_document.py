@@ -38,14 +38,14 @@ def generate_markdown_pdf(markdown_text: str, title: str = "Document") -> bytes:
     pdf.set_font("Helvetica", size=10)
     
     # We can inject a <style> block for some overarching styles like horizontal rules
-    style_block = \"\"\"
+    style_block = """
     <style>
         h1 { text-align: center; }
         h2 { color: #0047b3; }
         hr { color: #0047b3; }
         p { line-height: 1.4; }
     </style>
-    \"\"\"
+    """
     
     pdf.write_html(style_block + html_content)
     
