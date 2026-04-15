@@ -878,7 +878,7 @@ def main():
                                 type="primary"
                             )
                         except Exception as e:
-                            st.error("Could not convert to PDF. Fallback to Text.")
+                            st.error(f"Could not convert to PDF: {e}")
                             st.download_button("Download Optimized Resume (TXT)", optimized_resume, "optimized_resume.txt")
 
             # Cover Letter Generator
@@ -909,7 +909,7 @@ def main():
                                 type="primary"
                             )
                         except Exception as e:
-                            st.error("Could not convert to PDF. Fallback to Text.")
+                            st.error(f"Could not convert to PDF: {e}")
                             st.download_button("Download Cover Letter (TXT)", cover_letter, "cover_letter.txt")
 
             # Interview Question Predictor

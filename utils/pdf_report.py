@@ -35,6 +35,8 @@ def generate_pdf_report(
             return ""
         # Replace common unicode dashes and box drawing with hyphens
         text = re.sub(r'[—–━]', '-', text)
+        # Prevent fpdf 'Not enough horizontal space' crash by collapsing massive unbreakable sequences
+        text = re.sub(r'([-_=*~+])\1{50,}', r'\1\1\1', text)
         # Drop non-latin characters (like emojis)
         return text.encode('latin-1', errors='ignore').decode('latin-1')
 

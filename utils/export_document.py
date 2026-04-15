@@ -14,6 +14,8 @@ def _clean(txt: str) -> str:
         return ""
     txt = txt.replace("—", "-").replace("━", "-").replace("–", "-")
     txt = txt.replace("*", "").replace("`", "")
+    # Collapse 50+ repeating unbreakable characters (like dashes) to prevent 'Not enough horizontal space' FPDF crashes
+    txt = re.sub(r'([-_=~+])\1{50,}', r'\1\1\1', txt)
     return txt.encode('latin-1', errors='ignore').decode('latin-1').strip()
 
 def generate_markdown_pdf(markdown_text: str, title: str = "Document") -> bytes:
