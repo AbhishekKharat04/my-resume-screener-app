@@ -68,22 +68,10 @@ def generate_markdown_pdf(markdown_text: str, title: str = "Document") -> bytes:
             pdf.set_text_color(*black)
             pdf.set_font("Helvetica", "", 10)
             
-            # Print physical bullet
-            pdf.cell(4, 5, chr(149), ln=False) 
-            
-            # Support basic "**Topic:** rest of sentence" bolding
-            match = re.match(r"\*\*(.*?)\*\*(.*)", content)
-            if match:
-                bold_part = _clean(match.group(1))
-                rest = _clean(match.group(2))
-                pdf.set_font("Helvetica", "B", 10)
-                # Cell width dynamically sized to the bold text
-                w = pdf.get_string_width(bold_part) + 1
-                pdf.cell(w, 5, bold_part, ln=False)
-                pdf.set_font("Helvetica", "", 10)
-                pdf.multi_cell(0, 5, rest)
-            else:
-                pdf.multi_cell(0, 5, _clean(content))
+            # Convert Markdown bold to HTML bold
+            html_content = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', _clean(content))
+            # fpdf2 write_html supports <ul><li> natively
+            pdf.write_html(f"<ul><li>{html_content}</li></ul>")
                 
         # ── Standard text (Paragraphs, contact info, or italicized sub-lines) ──
         else:
@@ -109,10 +97,12 @@ def generate_markdown_pdf(markdown_text: str, title: str = "Document") -> bytes:
             if "|" in raw_line and len(raw_line) < 130 and "github" not in raw_line.lower() and "linkedin" not in raw_line.lower() and not raw_line.endswith("."):
                 pdf.cell(0, 5, _clean(raw_line), ln=True, align="C")
             elif ("github" in raw_line.lower() or "linkedin" in raw_line.lower()) and len(raw_line) < 130:
-                pdf.cell(0, 5, _clean(raw_line), ln=True, align="C")
+                html_content = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', _clean(raw_line))
+                pdf.write_html(f"<div align=\"center\">{html_content}</div>")
             else:
                 # Regular paragraph block
-                pdf.multi_cell(0, 5, _clean(raw_line))
+                html_content = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', _clean(raw_line))
+                pdf.write_html(f"<p>{html_content}</p>")
 
     buf = io.BytesIO()
     pdf.output(buf)
