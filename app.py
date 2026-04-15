@@ -59,6 +59,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+if "score_history" not in st.session_state:
+    st.session_state.score_history = []
+
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -162,19 +165,19 @@ st.markdown("""
   }
 
   .metric-box .lbl {
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     color: #8b949e;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
   }
 
   .hero-title {
-    font-size: 2.4rem;
-    font-weight: 700;
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
     background: linear-gradient(90deg, #58a6ff, #3fb950);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
     margin-bottom: 0.3rem;
   }
 
@@ -694,16 +697,41 @@ def main():
 
         with col_j:
             st.markdown("#### 💼 Job Description")
-            st.caption("Paste the job posting you're applying to")
+            st.caption("Paste a job posting, or use an industry template")
+            
+            preset_opts = {
+                "Custom (Paste below)": "",
+                "Software Engineer": "jd_software_engineer.txt",
+                "Data Scientist": "jd_data_scientist.txt",
+                "DevOps Engineer": "jd_devops_engineer.txt",
+                "Frontend Developer": "jd_frontend_developer.txt",
+                "Product Manager": "jd_product_manager.txt",
+            }
+            preset = st.selectbox(
+                "Load a template JD (optional):",
+                options=list(preset_opts.keys()),
+                key="ats_preset"
+            )
+            
+            initial_jd = ""
+            if preset != "Custom (Paste below)":
+                initial_jd = load_sample(preset_opts[preset])
+
             ats_jd = st.text_area(
                 "Job description",
+                value=initial_jd,
                 placeholder="Paste the full job description from the posting...",
-                height=280,
-                key="ats_jd_paste"
+                height=220,
+                key=f"ats_jd_paste"
             )
 
+        if "ats_jd_paste" in st.session_state and st.session_state.ats_jd_paste:
+            ats_jd_final = st.session_state.ats_jd_paste
+        else:
+            ats_jd_final = ats_jd
+
         if st.button("🔍 Check My ATS Score", key="ats_run", type="primary"):
-            if not ats_resume or not ats_jd:
+            if not ats_resume or not ats_jd_final:
                 st.error("Please provide both your resume and the job description.")
             elif not os.getenv("GROQ_API_KEY"):
                 st.error("GROQ_API_KEY is missing.")
@@ -718,7 +746,7 @@ def main():
 
                         result = run_pipeline(
                             resume_text=ats_resume,
-                            job_description=ats_jd,
+                            job_description=ats_jd_final,
                             label="ats_check",
                             use_flawed=False,
                         )
@@ -781,6 +809,119 @@ def main():
                         st.markdown(
                             f'<div class="recommendation-box">{ats_tips}</div>',
                             unsafe_allow_html=True
+                        )
+
+                        # Score History
+                        st.session_state.score_history.append(total_score)
+                        if len(st.session_state.score_history) > 1:
+                            st.markdown("### 📈 Your ATS Score Progress")
+                            st.line_chart(st.session_state.score_history)
+
+                        # ── Premium ATS Features ─────────────────────────────────
+                        st.markdown("---")
+                        st.markdown("## ✨ Premium ATS Tools")
+
+                        # Keyword Cloud
+                        with st.expander("☁️ View Keyword Cloud"):
+                            from utils.keyword_cloud import generate_keyword_cloud
+                            cloud_img = generate_keyword_cloud(
+                                matching.get("matched_skills", []),
+                                matching.get("missing_skills", []),
+                                matching.get("matched_tools", []),
+                                matching.get("missing_tools", []),
+                            )
+                            st.image(cloud_img, use_container_width=True)
+
+                        # AI Resume Rewriter
+                        with st.expander("📝 AI Resume Rewriter (Auto-Optimize)"):
+                            if st.button("Generate Optimized Resume", key="run_rewriter"):
+                                with st.spinner("Generating an ATS-optimized version of your resume..."):
+                                    from chains.resume_rewriter_chain import get_resume_rewriter_chain
+                                    rewriter_chain = get_resume_rewriter_chain()
+                                    optimized_resume = rewriter_chain.invoke(
+                                        {
+                                            "resume_text": ats_resume,
+                                            "job_description": ats_jd_final,
+                                            "extracted_profile": _json.dumps(extraction, indent=2),
+                                            "matching_result": _json.dumps(matching, indent=2),
+                                            "total_score": str(total_score),
+                                            "grade": grade,
+                                        }
+                                    )
+                                    st.markdown(f'<div class="recommendation-box">{optimized_resume}</div>', unsafe_allow_html=True)
+                                    st.download_button("Download Optimized Resume", optimized_resume, "optimized_resume.txt")
+
+                        # Cover Letter Generator
+                        with st.expander("💌 Generate Tailored Cover Letter"):
+                            if st.button("Generate Cover Letter", key="run_cl"):
+                                with st.spinner("Drafting a professional cover letter..."):
+                                    from chains.cover_letter_chain import get_cover_letter_chain
+                                    cl_chain = get_cover_letter_chain()
+                                    cover_letter = cl_chain.invoke(
+                                        {
+                                            "candidate_name": extraction.get("candidate_name", "Applicant"),
+                                            "total_score": str(total_score),
+                                            "extracted_profile": _json.dumps(extraction, indent=2),
+                                            "matching_result": _json.dumps(matching, indent=2),
+                                            "job_description": ats_jd_final,
+                                        }
+                                    )
+                                    st.markdown(f'<div class="recommendation-box">{cover_letter}</div>', unsafe_allow_html=True)
+                                    st.download_button("Download Cover Letter", cover_letter, "cover_letter.txt")
+
+                        # Interview Question Predictor
+                        with st.expander("❓ Predict Interview Questions"):
+                            if st.button("Generate Interview Questions", key="run_iq"):
+                                with st.spinner("Predicting questions based on your profile and gaps..."):
+                                    from chains.interview_questions_chain import get_interview_questions_chain
+                                    iq_chain = get_interview_questions_chain()
+                                    interview_qs = iq_chain.invoke(
+                                        {
+                                            "extracted_profile": _json.dumps(extraction, indent=2),
+                                            "matching_result": _json.dumps(matching, indent=2),
+                                            "job_description": ats_jd_final,
+                                            "total_score": str(total_score),
+                                            "grade": grade,
+                                        }
+                                    )
+                                    st.markdown(f'<div class="recommendation-box">{interview_qs}</div>', unsafe_allow_html=True)
+
+                        # PDF Report Download
+                        st.markdown("---")
+                        from utils.pdf_report import generate_pdf_report
+                        
+                        # Generate the cloud image buffer if not already done
+                        cloud_bytes = None
+                        if 'cloud_img' not in locals():
+                            from utils.keyword_cloud import generate_keyword_cloud
+                            tmp_cloud = generate_keyword_cloud(
+                                matching.get("matched_skills", []),
+                                matching.get("missing_skills", []),
+                                matching.get("matched_tools", []),
+                                matching.get("missing_tools", []),
+                            )
+                            cloud_bytes = tmp_cloud.getvalue()
+                        else:
+                            cloud_bytes = cloud_img.getvalue()
+
+                        pdf_buffer = generate_pdf_report(
+                            candidate_name=extraction.get("candidate_name", "Applicant"),
+                            total_score=total_score,
+                            grade=grade,
+                            extraction=extraction,
+                            matching=matching,
+                            scoring=scoring,
+                            recommendation="",  # Not used in applicant mode
+                            ats_tips=ats_tips,
+                            keyword_cloud_image=cloud_bytes
+                        )
+                        st.download_button(
+                            label="📄 Download Full ATS Report (PDF)",
+                            data=pdf_buffer,
+                            file_name=f"ats_report_{extraction.get('candidate_name', 'applicant').replace(' ', '_').lower()}.pdf",
+                            mime="application/pdf",
+                            type="primary",
+                            use_container_width=True
                         )
 
                     except Exception as e:

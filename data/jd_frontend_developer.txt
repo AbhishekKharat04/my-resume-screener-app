@@ -1,0 +1,43 @@
+Job Title: Senior Frontend Developer
+
+Company: PixelCraft Studios
+Location: Remote / Hybrid
+Type: Full-Time
+
+About the Role:
+We are looking for a Senior Frontend Developer to build beautiful, performant
+user interfaces for our web applications. You will work closely with designers
+and backend engineers to create exceptional user experiences.
+
+Required Skills:
+- JavaScript / TypeScript (advanced proficiency)
+- React.js (hooks, context, Redux/Zustand)
+- HTML5, CSS3, responsive design
+- CSS Frameworks: Tailwind CSS, Styled Components, or SASS
+- State Management: Redux, Zustand, or React Query
+- Testing: Jest, React Testing Library, Cypress
+- Build Tools: Webpack, Vite, or Next.js
+- Version Control: Git, GitHub
+
+Preferred / Bonus Skills:
+- Next.js (SSR, SSG, API routes)
+- Vue.js or Angular experience
+- GraphQL with Apollo Client
+- Animation: Framer Motion, GSAP
+- Accessibility (WCAG 2.1 AA compliance)
+- Performance optimization (Core Web Vitals)
+- Figma / design system collaboration
+- Mobile: React Native or Flutter
+
+Experience Requirements:
+- 3+ years of frontend development experience
+- Portfolio or live projects demonstrating UI/UX skills
+- Experience working with design systems
+
+Responsibilities:
+- Build responsive, accessible web interfaces
+- Implement pixel-perfect designs from Figma mockups
+- Optimize application performance and bundle size
+- Write unit and integration tests
+- Collaborate with UX designers and backend developers
+- Contribute to and maintain the component library

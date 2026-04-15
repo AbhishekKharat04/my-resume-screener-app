@@ -1,0 +1,41 @@
+Job Title: DevOps / Cloud Engineer
+
+Company: CloudFirst Solutions
+Location: Remote
+Type: Full-Time
+
+About the Role:
+We are seeking a DevOps Engineer to build and maintain our cloud infrastructure,
+CI/CD pipelines, and deployment automation. You will work at the intersection of
+development and operations to ensure reliable, scalable systems.
+
+Required Skills:
+- Cloud Platforms: AWS (EC2, ECS, EKS, Lambda, S3, RDS) or GCP or Azure
+- Containerization: Docker, Kubernetes (EKS/GKE/AKS)
+- CI/CD: GitHub Actions, Jenkins, ArgoCD, or GitLab CI
+- Infrastructure as Code: Terraform, CloudFormation, or Pulumi
+- Scripting: Bash, Python
+- Linux Administration (Ubuntu, CentOS)
+- Networking: VPC, load balancers, DNS, SSL/TLS
+- Version Control: Git
+
+Preferred / Bonus Skills:
+- Service Mesh: Istio or Linkerd
+- Monitoring & Observability: Prometheus, Grafana, ELK Stack, DataDog
+- Secret Management: HashiCorp Vault, AWS Secrets Manager
+- Helm charts for Kubernetes
+- Ansible or Chef for configuration management
+- Cost optimization and FinOps practices
+
+Experience Requirements:
+- 3+ years of DevOps or SRE experience
+- Experience managing production Kubernetes clusters
+- Incident response and on-call experience
+
+Responsibilities:
+- Design and maintain CI/CD pipelines
+- Manage cloud infrastructure (multi-region)
+- Implement security best practices and compliance
+- Automate deployment and scaling processes
+- Monitor system health and respond to incidents
+- Collaborate with development teams on architecture decisions

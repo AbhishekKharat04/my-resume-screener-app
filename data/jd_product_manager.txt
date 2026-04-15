@@ -1,0 +1,43 @@
+Job Title: Product Manager
+
+Company: InnovateTech
+Location: Remote / Hybrid
+Type: Full-Time
+
+About the Role:
+We are seeking a Product Manager to drive the strategy and execution of our
+core platform products. You will work cross-functionally with engineering,
+design, and business teams to deliver products that delight users.
+
+Required Skills:
+- Product Strategy: roadmap planning, prioritization frameworks (RICE, MoSCoW)
+- User Research: user interviews, surveys, usability testing
+- Data Analysis: SQL, Excel/Google Sheets, product analytics
+- Analytics Tools: Mixpanel, Amplitude, Google Analytics, or Heap
+- Agile/Scrum: sprint planning, backlog management, JIRA
+- Wireframing: Figma, Sketch, or Balsamiq
+- Communication: PRDs, user stories, stakeholder presentations
+- A/B Testing: experiment design and analysis
+
+Preferred / Bonus Skills:
+- Technical Background: basic coding, API understanding
+- Growth Product Management experience
+- B2B SaaS or marketplace experience
+- Financial modeling and business case development
+- Design thinking and Jobs-to-be-Done framework
+- SQL proficiency for self-serve analytics
+- Experience with AI/ML products
+
+Experience Requirements:
+- 3+ years of product management experience
+- Track record of shipping products 0-to-1 or scaling existing products
+- Experience managing cross-functional teams of 5+ people
+
+Responsibilities:
+- Define product vision, strategy, and roadmap
+- Prioritize features based on user needs and business impact
+- Write detailed PRDs and user stories
+- Collaborate with engineering and design sprints
+- Analyze product metrics and user feedback
+- Present product updates to leadership
+- Conduct competitive analysis and market research

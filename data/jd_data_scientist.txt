@@ -1,0 +1,40 @@
+Job Title: Senior Data Scientist
+
+Company: Analytics Corp
+Location: Remote / Hybrid
+Type: Full-Time
+
+About the Role:
+We are looking for a Senior Data Scientist to join our data analytics team.
+You will develop predictive models, conduct advanced statistical analysis,
+and translate complex data insights into actionable business recommendations.
+
+Required Skills:
+- Python (advanced proficiency)
+- Statistical Analysis: hypothesis testing, regression, Bayesian methods
+- Machine Learning: scikit-learn, XGBoost, random forests, neural networks
+- Deep Learning: TensorFlow or PyTorch
+- Data Visualization: Matplotlib, Seaborn, Plotly, Tableau
+- SQL (advanced queries, window functions, CTEs)
+- Data Wrangling: Pandas, NumPy, data cleaning
+- Jupyter Notebooks / Lab
+
+Preferred / Bonus Skills:
+- NLP: text classification, sentiment analysis, transformers
+- Big Data: Spark, Hadoop, or Databricks
+- Cloud: AWS (Redshift, S3) or GCP (BigQuery)
+- A/B Testing and experiment design
+- R programming
+- Docker for reproducible environments
+
+Experience Requirements:
+- 3+ years of professional data science experience
+- Experience presenting insights to non-technical stakeholders
+- Published research or Kaggle competition experience is a plus
+
+Responsibilities:
+- Build predictive and prescriptive models
+- Design and analyze A/B tests
+- Create dashboards and automated reports
+- Collaborate with engineering to deploy models
+- Mentor junior data scientists
