@@ -34,36 +34,40 @@ MATCHING RESULT:
 
 SCORE: {total_score}/100 | GRADE: {grade}
 
-Write the OPTIMIZED resume in this format:
+Write the OPTIMIZED resume in EXACTLY this Markdown format:
 
-═══════════════════════════════════════
-OPTIMIZED RESUME (ATS-Friendly Version)
-═══════════════════════════════════════
+# [CANDIDATE NAME]
+[Email] | [Phone] | [Location]
+[Links like GitHub/LinkedIn if present]
 
-[CANDIDATE NAME]
-[Contact info from original — keep as-is]
-
-━━━ PROFESSIONAL SUMMARY ━━━
+## SUMMARY
 [3-4 sentences targeting this specific role. Incorporate key matched AND missing skills naturally.]
 
-━━━ TECHNICAL SKILLS ━━━
-[Organized by category. Include ALL relevant skills — both matched and missing ones the candidate can legitimately claim]
+## SKILLS
+* **[Category]:** [Comma-separated skills — include EVERY relevant matched and missing skill]
+* **[Category]:** [Comma-separated skills]
 
-━━━ PROFESSIONAL EXPERIENCE ━━━
-[Rewrite each role with:
- - Strong action verbs (Developed, Architected, Deployed, Optimized...)
- - Quantified achievements (increased X by Y%, reduced Z by W%)
- - Keywords from the JD woven naturally into descriptions]
+## EXPERIENCE
+### [Job Title]
+*[Company]* | *[Location]* | *[Dates]*
+* [Strong action verb... quantified achievement... including JD keywords]
+* [Another bullet point]
 
-━━━ EDUCATION ━━━
-[Keep as-is from original]
+## EDUCATION
+### [Degree]
+*[Institution]* | *[Location]* | *[Dates]*
 
-━━━ CERTIFICATIONS / PROJECTS ━━━
-[If applicable, highlight relevant ones]
+## PROJECTS
+### [Project Name]
+*[Associated Orgs/Tech Stack]* | *[Dates]*
+* [Bullet point detailing the project]
 
-After the resume, add:
-━━━ CHANGES MADE ━━━
-[Bullet list of specific changes you made and why]"""
+## CERTIFICATIONS
+* [Certification Name] - [Issuer]
+
+---
+**CHANGES MADE**
+* [Bullet list explaining the strategic changes made to optimize for ATS]"""
 
 
 def get_resume_rewriter_prompt() -> PromptTemplate:
