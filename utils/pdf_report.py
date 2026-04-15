@@ -27,6 +27,16 @@ def generate_pdf_report(
         BytesIO buffer containing the PDF.
     """
     from fpdf import FPDF
+    import re
+
+    def _safe_text(text: str) -> str:
+        """Convert fancy quotes/emojis to basic ascii so fpdf Helvetica doesn't crash."""
+        if not text:
+            return ""
+        # Replace common unicode dashes and box drawing with hyphens
+        text = re.sub(r'[—–━]', '-', text)
+        # Drop non-latin characters (like emojis)
+        return text.encode('latin-1', errors='ignore').decode('latin-1')
 
     class ATSReport(FPDF):
         def header(self):
@@ -142,7 +152,7 @@ def generate_pdf_report(
         pdf.set_text_color(205, 217, 229)
         # Multi-cell for wrapping long text
         for line in recommendation.split("\n"):
-            pdf.multi_cell(0, 5, line)
+            pdf.multi_cell(0, 5, _safe_text(line))
         pdf.ln(5)
 
     # ── ATS Improvement Tips ─────────────────────────────────────────────
@@ -156,7 +166,7 @@ def generate_pdf_report(
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(205, 217, 229)
         for line in ats_tips.split("\n"):
-            pdf.multi_cell(0, 5, line)
+            pdf.multi_cell(0, 5, _safe_text(line))
 
     # Output
     buf = io.BytesIO()
