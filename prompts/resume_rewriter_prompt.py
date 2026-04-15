@@ -63,11 +63,7 @@ Write the OPTIMIZED resume in EXACTLY this Markdown format:
 * [Bullet point detailing the project]
 
 ## CERTIFICATIONS
-* [Certification Name] - [Issuer]
-
----
-**CHANGES MADE**
-* [Bullet list explaining the strategic changes made to optimize for ATS]"""
+* [Certification Name] - [Issuer]"""
 
 
 def get_resume_rewriter_prompt() -> PromptTemplate:

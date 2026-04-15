@@ -1,55 +1,119 @@
 """
 utils/export_document.py
 ────────────────────────
-Converts a Markdown string (like a Resume or Cover Letter) into a PDF.
+Converts a Markdown string (Resume/Cover Letter) into a beautifully styled PDF.
 """
 
 import io
 import re
-import markdown
 from fpdf import FPDF
 
-def _safe_text(text: str) -> str:
-    """Convert fancy quotes/emojis to basic ascii so fpdf Helvetica doesn't crash."""
-    if not text:
+def _clean(txt: str) -> str:
+    """Sanitize text for FPDF Helvetica and strip markdown characters."""
+    if not txt:
         return ""
-    # Replace common unicode dashes and box drawing with hyphens
-    text = re.sub(r'[—–━]', '-', text)
-    # Drop non-latin characters (like emojis)
-    return text.encode('latin-1', errors='ignore').decode('latin-1')
+    txt = txt.replace("—", "-").replace("━", "-").replace("–", "-")
+    txt = txt.replace("*", "").replace("`", "")
+    return txt.encode('latin-1', errors='ignore').decode('latin-1').strip()
 
 def generate_markdown_pdf(markdown_text: str, title: str = "Document") -> bytes:
     """
-    Export a Markdown string to a beautifully styled PDF.
+    Parses structural Markdown into a highly styled, ATS-compliant PDF resume layout.
     """
-    safe_md = _safe_text(markdown_text)
-    html_content = markdown.markdown(safe_md)
-    
-    # Inject styling to match the user's custom template (blue headers, center title, etc.)
-    html_content = html_content.replace("<h1>", "<h1 align=\"center\" style=\"color: #000000;\">")
-    html_content = html_content.replace(
-        "<h2>", 
-        "<h2 style=\"color: #0047b3; font-family: Helvetica;\">"
-    )
-    html_content = html_content.replace("<li>", "<li style=\"margin-bottom: 4px;\">")
-    
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Helvetica", size=10)
+    pdf.set_auto_page_break(auto=True, margin=15)
     
-    # We can inject a <style> block for some overarching styles like horizontal rules
-    style_block = """
-    <style>
-        h1 { text-align: center; }
-        h2 { color: #0047b3; }
-        hr { color: #0047b3; }
-        p { line-height: 1.4; }
-    </style>
-    """
+    # Brand colors and styling matches the user template
+    blue = (0, 71, 179)
+    black = (0, 0, 0)
+    dark_gray = (60, 60, 60)
     
-    pdf.write_html(style_block + html_content)
+    lines = markdown_text.split("\n")
     
+    for line in lines:
+        raw_line = line.strip()
+        if not raw_line:
+            pdf.ln(2)
+            continue
+            
+        # ── Title (Name) ──
+        if raw_line.startswith("# "):
+            pdf.set_font("Helvetica", "B", 22)
+            pdf.set_text_color(*black)
+            pdf.cell(0, 10, _clean(raw_line[2:]), ln=True, align="C")
+            pdf.ln(1)
+            
+        # ── Section Headers ──
+        elif raw_line.startswith("## "):
+            pdf.ln(4)
+            pdf.set_font("Helvetica", "B", 12)
+            pdf.set_text_color(*blue)
+            header_str = _clean(raw_line[3:]).upper()
+            pdf.cell(0, 6, header_str, ln=True, align="L")
+            # Accent line
+            pdf.set_draw_color(*blue)
+            pdf.line(pdf.get_x(), pdf.get_y(), 200, pdf.get_y())
+            pdf.ln(2)
+            
+        # ── Sub-headers (Job Titles, Degrees) ──
+        elif raw_line.startswith("### "):
+            pdf.set_font("Helvetica", "B", 11)
+            pdf.set_text_color(*black)
+            pdf.cell(0, 6, _clean(raw_line[4:]), ln=True)
+            
+        # ── Bullet Points ──
+        elif raw_line.startswith("* ") or raw_line.startswith("- "):
+            content = raw_line[2:].strip()
+            pdf.set_text_color(*black)
+            pdf.set_font("Helvetica", "", 10)
+            
+            # Print physical bullet
+            pdf.cell(4, 5, chr(149), ln=False) 
+            
+            # Support basic "**Topic:** rest of sentence" bolding
+            match = re.match(r"\*\*(.*?)\*\*(.*)", content)
+            if match:
+                bold_part = _clean(match.group(1))
+                rest = _clean(match.group(2))
+                pdf.set_font("Helvetica", "B", 10)
+                # Cell width dynamically sized to the bold text
+                w = pdf.get_string_width(bold_part) + 1
+                pdf.cell(w, 5, bold_part, ln=False)
+                pdf.set_font("Helvetica", "", 10)
+                pdf.multi_cell(0, 5, rest)
+            else:
+                pdf.multi_cell(0, 5, _clean(content))
+                
+        # ── Standard text (Paragraphs, contact info, or italicized sub-lines) ──
+        else:
+            # Check for right-aligned date lines (Company | Location | Date)
+            if "|" in raw_line and not raw_line.endswith(".") and len(raw_line) < 120:
+                parts = [p.strip() for p in raw_line.split("|")]
+                if len(parts) >= 2 and any(month in parts[-1] for month in ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Present", "202"]):
+                    # This is likely a subtitle line with a date on the right
+                    pdf.set_font("Helvetica", "I", 10)
+                    pdf.set_text_color(*dark_gray)
+                    left_str = _clean(" | ".join(parts[:-1]))
+                    right_str = _clean(parts[-1])
+                    
+                    pdf.cell(140, 5, left_str, ln=False)
+                    pdf.cell(0, 5, right_str, ln=True, align="R")
+                    continue
+            
+            # Normal paragraph or contact info
+            pdf.set_font("Helvetica", "", 10)
+            pdf.set_text_color(*black)
+            
+            # If it's a short line with pipes (like contact info at top), center it
+            if "|" in raw_line and len(raw_line) < 130 and "github" not in raw_line.lower() and "linkedin" not in raw_line.lower() and not raw_line.endswith("."):
+                pdf.cell(0, 5, _clean(raw_line), ln=True, align="C")
+            elif ("github" in raw_line.lower() or "linkedin" in raw_line.lower()) and len(raw_line) < 130:
+                pdf.cell(0, 5, _clean(raw_line), ln=True, align="C")
+            else:
+                # Regular paragraph block
+                pdf.multi_cell(0, 5, _clean(raw_line))
+
     buf = io.BytesIO()
     pdf.output(buf)
-    
     return buf.getvalue()
