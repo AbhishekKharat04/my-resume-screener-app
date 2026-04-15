@@ -1,11 +1,18 @@
 """
-app.py — AI Resume Screening System | Streamlit UI
+app.py — ATS Resume Screener | Streamlit UI
 ====================================================
-A professional, recruiter-facing interface to screen resumes against a
-job description using a 4-step LangChain pipeline with LangSmith tracing.
+A professional ATS (Applicant Tracking System) resume screening tool
+for both recruiters AND job applicants.
 
-Features:
-  - Upload a resume (TXT) or paste raw text
+For Recruiters/HR:
+  - Upload resumes and screen against a job description
+  - View ranked candidates with ATS scores
+  - Get evidence-backed hiring recommendations
+
+For Job Applicants:
+  - Check your resume's ATS compatibility score
+  - See exactly which keywords are missing
+  - Get actionable tips to improve your resume
   - Paste or load the job description
   - View extraction, matching, scoring, and explanation results
   - Visual score breakdown with progress bars
@@ -46,8 +53,8 @@ for _k in _CLOUD_KEYS:
 
 # ── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="AI Resume Screener",
-    page_icon="🎯",
+    page_title="ATS Resume Screener",
+    page_icon="📋",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -621,14 +628,15 @@ def main():
         st.markdown("---")
         st.markdown("### 📖 About")
         st.caption(
-            "AI Resume Screening System using LangChain + Groq (Llama 3.3-70B) "
-            "with LangSmith tracing. Pipeline: Extract → Match → Score → Explain."
+            "ATS Resume Screener — AI-powered resume screening for recruiters "
+            "and job applicants. Built with LangChain + Groq (Llama 3.3-70B) "
+            "+ LangSmith tracing."
         )
 
     # ── Hero Header ───────────────────────────────────────────────────────────
-    st.markdown('<div class="hero-title">AI Resume Screener</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-title">ATS Resume Screener</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="hero-sub">LangChain · Groq Llama 3.3-70B · LangSmith Tracing</div>',
+        '<div class="hero-sub">AI-Powered Resume Screening for Recruiters & Job Applicants</div>',
         unsafe_allow_html=True
     )
     st.markdown(
@@ -647,12 +655,142 @@ def main():
     )
 
     # ── Mode Tabs ─────────────────────────────────────────────────────────────
-    tab_single, tab_batch, tab_demo = st.tabs([
-        "🔍 Single Resume", "📊 Batch Compare", "🎯 Demo Mode"
+    tab_applicant, tab_single, tab_batch, tab_demo = st.tabs([
+        "📝 ATS Check (Applicants)", "🔍 Recruiter Screen", "📊 Batch Compare", "🎯 Demo Mode"
     ])
 
     # ══════════════════════════════════════════════════════════════════════════
-    # TAB 1 — Single Resume Screening
+    # TAB 0 — ATS Check for Applicants
+    # ══════════════════════════════════════════════════════════════════════════
+    with tab_applicant:
+        st.markdown("### 📝 Check Your Resume's ATS Score")
+        st.caption(
+            "Upload your resume and paste the job description you're applying to. "
+            "We'll tell you your ATS compatibility score, missing keywords, and "
+            "exactly how to improve your resume."
+        )
+
+        col_r, col_j = st.columns(2)
+
+        with col_r:
+            st.markdown("#### 📄 Your Resume")
+            ats_uploaded = st.file_uploader(
+                "Upload your resume",
+                type=SUPPORTED_TYPES,
+                key="ats_upload",
+                help="Supports TXT, PDF, DOCX, PNG, JPG"
+            )
+            if ats_uploaded:
+                with st.spinner("Reading your resume..."):
+                    ats_resume = extract_text_from_file(ats_uploaded)
+                st.text_area("Resume content", ats_resume, height=280, key="ats_resume_display")
+            else:
+                ats_resume = st.text_area(
+                    "Or paste your resume text",
+                    placeholder="Paste your resume here...",
+                    height=280,
+                    key="ats_resume_paste"
+                )
+
+        with col_j:
+            st.markdown("#### 💼 Job Description")
+            st.caption("Paste the job posting you're applying to")
+            ats_jd = st.text_area(
+                "Job description",
+                placeholder="Paste the full job description from the posting...",
+                height=280,
+                key="ats_jd_paste"
+            )
+
+        if st.button("🔍 Check My ATS Score", key="ats_run", type="primary"):
+            if not ats_resume or not ats_jd:
+                st.error("Please provide both your resume and the job description.")
+            elif not os.getenv("GROQ_API_KEY"):
+                st.error("GROQ_API_KEY is missing.")
+            else:
+                with st.spinner("Analyzing your resume against the job description..."):
+                    progress = st.progress(0)
+                    status   = st.empty()
+
+                    try:
+                        status.markdown("**Step 1/5** — Extracting skills from your resume...")
+                        progress.progress(10)
+
+                        result = run_pipeline(
+                            resume_text=ats_resume,
+                            job_description=ats_jd,
+                            label="ats_check",
+                            use_flawed=False,
+                        )
+
+                        status.markdown("**Step 5/5** — Generating improvement tips...")
+                        progress.progress(80)
+
+                        # Run ATS improvement chain
+                        import json as _json
+                        from chains.ats_improvement_chain import get_ats_improvement_chain
+
+                        ats_chain   = get_ats_improvement_chain()
+                        scoring     = result["scoring"]
+                        extraction  = result["extraction"]
+                        matching    = result["matching"]
+
+                        ats_tips = ats_chain.invoke(
+                            {
+                                "candidate_name": extraction.get("candidate_name", "Applicant"),
+                                "total_score":    str(scoring.get("total_score", 0)),
+                                "grade":          scoring.get("grade", "N/A"),
+                                "extracted_profile": _json.dumps(extraction, indent=2),
+                                "matching_result":   _json.dumps(matching, indent=2),
+                                "score_result":      _json.dumps(scoring, indent=2),
+                            },
+                            config={
+                                "run_name": "ats_improvement_tips",
+                                "tags": ["ats_check", "applicant_mode"],
+                                "metadata": {"step": "5_ats_improvement", "source": "applicant_mode"},
+                            },
+                        )
+
+                        progress.progress(100)
+                        status.empty()
+
+                        # ── Display ATS Results ──────────────────────────────────
+                        st.markdown("---")
+                        total_score = scoring.get("total_score", 0)
+                        grade       = scoring.get("grade", "?")
+
+                        # Big score display
+                        c1, c2, c3 = st.columns([1, 2, 1])
+                        with c2:
+                            color = score_color(total_score)
+                            st.markdown(
+                                f'<div style="text-align:center;padding:2rem;">'
+                                f'<div style="font-size:4rem;font-weight:800;color:{color}">{total_score}/100</div>'
+                                f'<div class="score-badge {grade_color(grade)}" style="font-size:1.3rem;">'
+                                f'ATS Grade: {grade}</div>'
+                                f'</div>',
+                                unsafe_allow_html=True
+                            )
+
+                        # Score breakdown
+                        render_results(result)
+
+                        # ATS Improvement Tips
+                        st.markdown("---")
+                        st.markdown("## 🚀 How to Improve Your Resume")
+                        st.markdown(
+                            f'<div class="recommendation-box">{ats_tips}</div>',
+                            unsafe_allow_html=True
+                        )
+
+                    except Exception as e:
+                        progress.empty()
+                        status.empty()
+                        st.error(f"Analysis error: {e}")
+                        st.exception(e)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # TAB 1 — Recruiter Single Resume Screening
     # ══════════════════════════════════════════════════════════════════════════
     with tab_single:
         st.markdown("### Screen a Single Resume")
