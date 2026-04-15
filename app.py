@@ -19,6 +19,7 @@ Author: Abhishek Kharat
 """
 
 import json
+import io
 import os
 import time
 from pathlib import Path
@@ -228,6 +229,81 @@ st.markdown("""
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 DATA_DIR = Path(__file__).parent / "data"
+
+# ── Supported file types ─────────────────────────────────────────────────────
+SUPPORTED_TYPES = ["txt", "pdf", "docx", "doc", "png", "jpg", "jpeg"]
+
+
+def extract_text_from_file(uploaded_file) -> str:
+    """Extract plain text from an uploaded file (TXT, PDF, DOCX, or image)."""
+    name = uploaded_file.name.lower()
+    raw  = uploaded_file.read()
+
+    # ── Plain text ────────────────────────────────────────────────────────
+    if name.endswith(".txt"):
+        return raw.decode("utf-8", errors="replace")
+
+    # ── PDF ───────────────────────────────────────────────────────────────
+    if name.endswith(".pdf"):
+        try:
+            from PyPDF2 import PdfReader
+            reader = PdfReader(io.BytesIO(raw))
+            pages  = [p.extract_text() or "" for p in reader.pages]
+            text   = "\n".join(pages).strip()
+            if text:
+                return text
+            # If PyPDF2 returns empty (scanned PDF), fall through to OCR
+            return _ocr_pdf_bytes(raw)
+        except Exception as e:
+            return f"[PDF extraction error: {e}]"
+
+    # ── Word (DOCX) ───────────────────────────────────────────────────────
+    if name.endswith((".docx", ".doc")):
+        try:
+            from docx import Document
+            doc   = Document(io.BytesIO(raw))
+            paras = [p.text for p in doc.paragraphs if p.text.strip()]
+            return "\n".join(paras)
+        except Exception as e:
+            return f"[DOCX extraction error: {e}]"
+
+    # ── Image (PNG / JPEG) — OCR ──────────────────────────────────────────
+    if name.endswith((".png", ".jpg", ".jpeg")):
+        return _ocr_image_bytes(raw)
+
+    return "[Unsupported file format]"
+
+
+def _ocr_image_bytes(image_bytes: bytes) -> str:
+    """Run Tesseract OCR on raw image bytes."""
+    try:
+        from PIL import Image
+        import pytesseract
+        img  = Image.open(io.BytesIO(image_bytes))
+        text = pytesseract.image_to_string(img)
+        return text.strip() if text.strip() else "[OCR returned no text — is the image a valid resume?]"
+    except Exception as e:
+        return f"[Image OCR error: {e}]"
+
+
+def _ocr_pdf_bytes(pdf_bytes: bytes) -> str:
+    """Fallback: OCR a scanned PDF by converting pages to images."""
+    try:
+        from PIL import Image
+        import pytesseract
+        from PyPDF2 import PdfReader
+        # For scanned PDFs without embedded text, we can only OCR if
+        # pdf2image is available; otherwise return a helpful message.
+        try:
+            from pdf2image import convert_from_bytes
+            images = convert_from_bytes(pdf_bytes)
+            texts  = [pytesseract.image_to_string(img) for img in images]
+            return "\n".join(texts).strip()
+        except ImportError:
+            return "[Scanned PDF detected but pdf2image is not installed. Please upload a text-based PDF or an image instead.]"
+    except Exception as e:
+        return f"[Scanned PDF OCR error: {e}]"
+
 
 def load_sample(filename: str) -> str:
     path = DATA_DIR / filename
@@ -510,9 +586,15 @@ def main():
 
         with col_resume:
             st.markdown("#### 📄 Resume")
-            uploaded = st.file_uploader("Upload .txt file", type=["txt"], key="single_upload")
+            uploaded = st.file_uploader(
+                "Upload resume file",
+                type=SUPPORTED_TYPES,
+                key="single_upload",
+                help="Supports TXT, PDF, DOCX, PNG, JPG"
+            )
             if uploaded:
-                resume_text = uploaded.read().decode("utf-8")
+                with st.spinner("Extracting text..."):
+                    resume_text = extract_text_from_file(uploaded)
                 st.text_area("Resume content", resume_text, height=280, key="single_resume_display")
             else:
                 resume_text = st.text_area(
@@ -594,9 +676,12 @@ def main():
         for i, col in enumerate(cols):
             with col:
                 label = st.text_input(f"Label {i+1}", value=f"Candidate {i+1}", key=f"batch_label_{i}")
-                uploaded = st.file_uploader(f"Resume {i+1} (.txt)", type=["txt"], key=f"batch_upload_{i}")
+                uploaded = st.file_uploader(
+                    f"Resume {i+1}", type=SUPPORTED_TYPES, key=f"batch_upload_{i}",
+                    help="TXT, PDF, DOCX, PNG, JPG"
+                )
                 if uploaded:
-                    resumes[label] = uploaded.read().decode("utf-8")
+                    resumes[label] = extract_text_from_file(uploaded)
 
         if st.button("🚀 Screen All Candidates", key="batch_run"):
             if not resumes:
